@@ -3,15 +3,33 @@ from discord import app_commands
 import time
 import asyncio
 from datetime import datetime
-
 import os
+
+# ===== KEEP ALIVE (RENDER FIX) =====
+from flask import Flask
+from threading import Thread
+
+app = Flask('')
+
+@app.route('/')
+def home():
+    return "Bot is alive"
+
+def run():
+    app.run(host='0.0.0.0', port=10000)
+
+def keep_alive():
+    t = Thread(target=run)
+    t.start()
+
+# ===== TOKEN =====
 TOKEN = os.getenv("TOKEN")
 
 intents = discord.Intents.default()
 client = discord.Client(intents=intents)
 tree = app_commands.CommandTree(client)
 
-# ===== SETTINGS (UPDATED) =====
+# ===== SETTINGS =====
 SCALE = 365 / 12
 START_REAL = datetime.fromisoformat("2026-03-19T02:00:00-04:00").timestamp()
 START_YEAR = 2065
@@ -91,7 +109,7 @@ def get_game_data():
     year_progress = (remaining / seconds_in_year) * 100
     turn_progress = ((game_elapsed % seconds_per_turn) / seconds_per_turn) * 100
 
-    # Countdown (REAL time)
+    # Countdown
     seconds_to_year = (seconds_in_year - remaining) / SCALE
     seconds_to_turn = (seconds_per_turn - (game_elapsed % seconds_per_turn)) / SCALE
 
@@ -102,11 +120,28 @@ def get_game_data():
         "time": f"{hours:02}:{minutes:02}:{seconds:02}",
         "year_bar": make_bar(year_progress),
         "turn_bar": make_bar(turn_progress),
-        "year_percent": f"{year_progress:.1f}%",
-        "turn_percent": f"{turn_progress:.1f}%",
         "year_countdown": format_time(seconds_to_year),
         "turn_countdown": format_time(seconds_to_turn)
     }
+
+# ===== EMBED BUILDER =====
+def build_embed(data):
+    return discord.Embed(
+        title="🌍 Game Time",
+        description=(
+            f"**Year {data['year']} | Turn {data['turn']}**\n"
+            f"{data['date']}\n"
+            f"`{data['time']}`\n\n"
+
+            f"**Year Progress**\n"
+            f"{data['year_bar']}\n"
+            f"⏳ Next Year in: {data['year_countdown']}\n\n"
+
+            f"**Turn Progress**\n"
+            f"{data['turn_bar']}\n"
+            f"⏳ Next Turn in: {data['turn_countdown']}"
+        )
+    )
 
 # ===== SLASH COMMAND =====
 @tree.command(name="time", description="Live game time (updates every 2 seconds)")
@@ -123,29 +158,12 @@ async def time_command(interaction: discord.Interaction):
         except:
             break
 
-# ===== EMBED BUILDER =====
-def build_embed(data):
-    return discord.Embed(
-        title="🌍 Game Time",
-        description=(
-            f"**Year {data['year']} | Turn {data['turn']}**\n"
-            f"{data['date']}\n"
-            f"`{data['time']}`\n\n"
-
-            f"**Year Progress ({data['year_percent']})**\n"
-            f"{data['year_bar']}\n"
-            f"⏳ Next Year in: {data['year_countdown']}\n\n"
-
-            f"**Turn Progress ({data['turn_percent']})**\n"
-            f"{data['turn_bar']}\n"
-            f"⏳ Next Turn in: {data['turn_countdown']}"
-        )
-    )
-
 # ===== READY =====
 @client.event
 async def on_ready():
     await tree.sync()
     print(f"Logged in as {client.user}")
 
+# ===== START =====
+keep_alive()
 client.run(TOKEN)
