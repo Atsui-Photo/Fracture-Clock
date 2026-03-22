@@ -4,7 +4,8 @@ import time
 import asyncio
 from datetime import datetime
 
-TOKEN = "YOUR_BOT_TOKEN"
+import os
+TOKEN = os.getenv("TOKEN")
 
 intents = discord.Intents.default()
 client = discord.Client(intents=intents)
@@ -39,7 +40,7 @@ def get_month_day(day_of_year, year):
 def make_bar(percent):
     total = 10
     filled = round((percent / 100) * total)
-    return "█" * filled + "░" * (total - filled) + f" {percent:.1f}%"
+    return "█" * filled + "░" * (total - filled)
 
 def format_time(seconds):
     seconds = max(0, int(seconds))
