@@ -133,11 +133,11 @@ def build_embed(data):
             f"{data['date']}\n"
             f"`{data['time']}`\n\n"
 
-            f"**Year Progress**\n"
+            f"**Year Progress ({data['year_percent']})**\n"
             f"{data['year_bar']}\n"
             f"⏳ Next Year in: {data['year_countdown']}\n\n"
 
-            f"**Turn Progress**\n"
+            f"**Turn Progress ({data['turn_percent']})**\n"
             f"{data['turn_bar']}\n"
             f"⏳ Next Turn in: {data['turn_countdown']}"
         )
